@@ -400,7 +400,7 @@ static int sort_gp_desc(const void *a, const void *b) {
 /* ====================================================================
  * Commands
  * ==================================================================== */
-
+//  http://api.map.baidu.com/lbsapi/getpoint/
 /* GEOADD key long lat name [long2 lat2 name2 ... longN latN nameN] */
 void geoaddCommand(client *c) {
     /* Check arguments number for sanity. */
@@ -414,7 +414,7 @@ void geoaddCommand(client *c) {
     int elements = (c->argc - 2) / 3;
     int argc = 2+elements*2; /* ZADD key score ele ... */
     robj **argv = zcalloc(argc*sizeof(robj*));
-    argv[0] = createRawStringObject("zadd",4);
+    argv[0] = createRawStringObject("zadd",4); // 转化为新的客户端请求 geoadd -> zadd
     argv[1] = c->argv[1]; /* key */
     incrRefCount(argv[1]);
 
@@ -424,7 +424,7 @@ void geoaddCommand(client *c) {
     int i;
     for (i = 0; i < elements; i++) {
         double xy[2];
-
+        // 解析经纬度
         if (extractLongLatOrReply(c, (c->argv+2)+(i*3),xy) == C_ERR) {
             for (i = 0; i < argc; i++)
                 if (argv[i]) decrRefCount(argv[i]);
@@ -433,6 +433,7 @@ void geoaddCommand(client *c) {
         }
 
         /* Turn the coordinates into the score of the element. */
+        // 将经纬度进行编码成一个整型值，并封装为 一个string，作为 zadd 的入参
         GeoHashBits hash;
         geohashEncodeWGS84(xy[0], xy[1], GEO_STEP_MAX, &hash);
         GeoHashFix52Bits bits = geohashAlign52Bits(hash);
@@ -444,7 +445,9 @@ void geoaddCommand(client *c) {
     }
 
     /* Finally call ZADD that will do the work for us. */
+    // 替换原来的 client 入参
     replaceClientCommandVector(c,argc,argv);
+    // 执行zadd操作
     zaddCommand(c);
 }
 
@@ -556,7 +559,9 @@ void georadiusGeneric(client *c, int flags) {
      * ordering if COUNT was specified but no sorting was requested. */
     if (count != 0 && sort == SORT_NONE) sort = SORT_ASC;
 
-    /* Get all neighbor geohash boxes for our radius search */
+    /* Get all neighbor geohash boxes for our radius search
+     *  根据经纬度进行距离查询
+     * */
     GeoHashRadius georadius =
         geohashGetAreasByRadiusWGS84(xy[0], xy[1], radius_meters);
 
@@ -817,7 +822,11 @@ void geodistCommand(client *c) {
         return;
     }
 
-    /* Decode & compute the distance. */
+    /* Decode & compute the distance.
+     *
+     *  将 score解码为 经纬度，并计算距离
+     *
+     * */
     if (!decodeGeohash(score1,xyxy) || !decodeGeohash(score2,xyxy+2))
         addReplyNull(c);
     else

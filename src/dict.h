@@ -68,15 +68,15 @@ typedef struct dictType {
  * implement incremental rehashing, for the old to the new table. */
 typedef struct dictht {
     dictEntry **table;
-    unsigned long size;
+    unsigned long size; //  hashtable 容量
     unsigned long sizemask;  // size -1
-    unsigned long used;
+    unsigned long used;  // hashtable 元素个数   used / size =1
 } dictht;
 
 typedef struct dict {
     dictType *type;
     void *privdata;
-    dictht ht[2];
+    dictht ht[2];// ht[0] , ht[1] =null
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
     unsigned long iterators; /* number of iterators currently running */
 } dict;

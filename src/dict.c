@@ -206,14 +206,14 @@ int dictRehash(dict *d, int n) {
 
             nextde = de->next;
             /* Get the index in the new hash table */
-            h = dictHashKey(d, de->key) & d->ht[1].sizemask;
+            h = dictHashKey(d, de->key) & d->ht[1].sizemask; // rehash
             de->next = d->ht[1].table[h];
-            d->ht[1].table[h] = de;
+            d->ht[1].table[h] = de; // 头节点易主
             d->ht[0].used--;
             d->ht[1].used++;
             de = nextde;
         }
-        d->ht[0].table[d->rehashidx] = NULL;
+        d->ht[0].table[d->rehashidx] = NULL; // 原来的 hash slot 置为空
         d->rehashidx++;
     }
 

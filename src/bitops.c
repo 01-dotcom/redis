@@ -550,11 +550,13 @@ void setbitCommand(client *c) {
 
     if ((o = lookupStringForBitCommand(c,bitoffset)) == NULL) return;
 
-    /* Get current values */
+    /* Get current values
+     *  获取原来的值,用于返回旧值
+     * */
     byte = bitoffset >> 3;
     byteval = ((uint8_t*)o->ptr)[byte];
-    bit = 7 - (bitoffset & 0x7);
-    bitval = byteval & (1 << bit);
+    bit = 7 - (bitoffset & 0x7); // 算出 bit 的位置
+    bitval = byteval & (1 << bit); // 获得旧值
 
     /* Update byte with new bit value and return original value */
     byteval &= ~(1 << bit);
